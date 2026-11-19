@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0b">
+<title>开门助手</title>
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --card: #17181a;
+    --card-hi: #202124;
+    --line: rgba(255, 255, 255, .08);
+    --text: #f2f3f5;
+    --sub: #94979d;
+    --accent: #2cb458;
+    --accent-soft: rgba(44, 180, 88, .14);
+    --danger: #ff453a;
+    --radius: 18px;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro SC", "PingFang SC",
+                 "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background:
+      radial-gradient(120% 60% at 50% -10%, rgba(44, 180, 88, .16), transparent 60%),
+      var(--bg);
+    padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 20px);
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 18px;
+  }
+
+  /* ---------- 顶栏 ---------- */
+  header {
+    padding: 26px 0 14px;
+  }
+
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: .2px;
+  }
+
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--card);
+    color: var(--text);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: transform .15s ease, background .2s ease;
+  }
+  .icon-btn:active { transform: scale(.92); background: var(--card-hi); }
+  .icon-btn svg { width: 19px; height: 19px; }
+  .icon-btn.spinning svg { animation: spin .9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .community {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px 7px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    max-width: 100%;
+  }
+  .community:disabled { opacity: .55; cursor: default; }
+  .community .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+    flex: none;
+  }
+  .community span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .community .chev { flex: none; opacity: .55; font-size: 10px; }
+
+  /* ---------- 提示条 ---------- */
+  .banner {
+    display: none;
+    margin: 14px 0 0;
+    padding: 13px 15px;
+    border-radius: 14px;
+    background: rgba(255, 69, 58, .12);
+    border: 1px solid rgba(255, 69, 58, .28);
+    color: #ffb4ae;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .banner.show { display: block; }
+  .banner b { color: #ffd9d5; }
+
+  /* ---------- 门禁列表 ---------- */
+  .list { margin-top: 16px; display: flex; flex-direction: column; gap: 11px; }
+
+  .door {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, var(--card-hi), var(--card));
+    color: var(--text);
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform .12s ease, border-color .2s ease, filter .2s ease;
+  }
+  .door::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(80% 120% at 0% 0%, var(--accent-soft), transparent 55%);
+    opacity: 0;
+    transition: opacity .25s ease;
+    pointer-events: none;
+  }
+  .door:active { transform: scale(.985); }
+  .door:active::after { opacity: 1; }
+  .door[disabled] { filter: saturate(.4) brightness(.85); pointer-events: none; }
+
+  .door .glyph {
+    width: 46px;
+    height: 46px;
+    flex: none;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .door .glyph svg { width: 23px; height: 23px; }
+  .door .meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .door .name {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .door .hint { display: block; font-size: 12.5px; color: var(--sub); }
+  .door .chev { color: var(--sub); flex: none; opacity: .7; }
+
+  .door.busy .glyph { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+
+  /* ---------- 空态 ---------- */
+  .empty {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 64px 24px;
+    color: var(--sub);
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .empty.show { display: flex; }
+  .empty svg { width: 42px; height: 42px; opacity: .5; }
+  .empty button {
+    margin-top: 4px;
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* ---------- 底部信息 ---------- */
+  footer {
+    margin-top: 22px;
+    padding: 0 4px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 11.5px;
+    color: #62656b;
+  }
+  footer .token {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  footer #updatedAt { flex: none; }
+  footer button {
+    border: 0;
+    background: none;
+    color: #62656b;
+    font: inherit;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* ---------- 遮罩 ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, .55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .overlay.show { display: flex; }
+
+  .busy-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 26px 34px;
+    border-radius: 22px;
+    background: rgba(23, 24, 26, .92);
+    border: 1px solid var(--line);
+  }
+  .busy-box .ring {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, .16);
+    border-top-color: var(--accent);
+    animation: spin .8s linear infinite;
+  }
+  .busy-box .txt { font-size: 14px; color: #dfe1e5; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(env(safe-area-inset-bottom) + 28px);
+    transform: translate(-50%, 12px);
+    z-index: 60;
+    max-width: min(86vw, 420px);
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: rgba(240, 241, 244, .96);
+    color: #111;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast.err { background: rgba(255, 69, 58, .96); color: #fff; }
+
+  /* ---------- 底部弹层 ---------- */
+  .sheet-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, .5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .sheet-mask.show { display: flex; }
+
+  .sheet {
+    width: 100%;
+    max-width: 560px;
+    padding: 18px 18px calc(env(safe-area-inset-bottom) + 18px);
+    border-radius: 24px 24px 0 0;
+    background: #141518;
+    border-top: 1px solid var(--line);
+    transform: translateY(100%);
+    transition: transform .26s cubic-bezier(.22, .8, .3, 1);
+  }
+  .sheet-mask.show .sheet { transform: translateY(0); }
+  .sheet h2 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--sub);
+    text-align: center;
+  }
+  .sheet-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 15px 14px;
+    border: 0;
+    border-radius: 13px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 16px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .sheet-item:active { background: var(--card-hi); }
+  .sheet-item .tick { color: var(--accent); font-size: 15px; }
+
+  /* ---------- 口令门 ---------- */
+  .gate-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--bg);
+  }
+  .gate-mask.show { display: flex; }
+  .gate {
+    width: 100%;
+    max-width: 340px;
+    padding: 26px 22px;
+    border-radius: 22px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    text-align: center;
+  }
+  .gate h2 { margin: 0 0 6px; font-size: 18px; }
+  .gate p { margin: 0 0 18px; font-size: 13px; color: var(--sub); }
+  .gate input {
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: #0f1011;
+    color: var(--text);
+    font: inherit;
+    font-size: 16px;
+    text-align: center;
+    letter-spacing: 2px;
+    outline: none;
+  }
+  .gate input:focus { border-color: rgba(44, 180, 88, .55); }
+  .gate button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #04210f;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .gate .err { margin-top: 10px; font-size: 12.5px; color: var(--danger); min-height: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <h1>开门助手</h1>
+      <button class="icon-btn" id="refreshBtn" title="刷新" aria-label="刷新">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+          <path d="M21 3v6h-6"></path>
+        </svg>
+      </button>
+    </div>
+    <button class="community" id="communityBtn" disabled>
+      <i class="dot"></i>
+      <span id="communityName">正在加载…</span>
+      <i class="chev" id="communityChev" hidden>▾</i>
+    </button>
+  </header>
+
+  <div class="banner" id="banner"></div>
+
+  <main class="list" id="list"></main>
+
+  <div class="empty" id="empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 4H6a2 2 0 0 0-2 2v14h11"></path>
+      <path d="M13 4v16"></path>
+      <path d="M20 8v12"></path>
+      <circle cx="10" cy="12" r="1" fill="currentColor" stroke="none"></circle>
+    </svg>
+    <div id="emptyText">暂无可用门禁</div>
+    <button id="emptyRetry">重新加载</button>
+  </div>
+
+  <footer>
+    <span id="updatedAt">—</span>
+    <span class="token" id="tokenLabel" title="点击复制 token">token: —</span>
+  </footer>
+</div>
+
+<!-- 全屏忙碌 -->
+<div class="overlay" id="overlay">
+  <div class="busy-box">
+    <div class="ring"></div>
+    <div class="txt" id="busyText">正在开门…</div>
+  </div>
+</div>
+
+<!-- 小区切换 -->
+<div class="sheet-mask" id="sheetMask">
+  <div class="sheet">
+    <h2>切换小区</h2>
+    <div id="sheetList"></div>
+  </div>
+</div>
+
+<!-- 访问口令 -->
+<div class="gate-mask" id="gateMask">
+  <div class="gate">
+    <h2>访问口令</h2>
+    <p>请输入口令后使用</p>
+    <input id="gateInput" type="password" inputmode="text" autocomplete="off" placeholder="口令">
+    <button id="gateBtn">进入</button>
+    <div class="err" id="gateErr"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+ *  ↓↓↓ 配置区：部署前只需要改这里 ↓↓↓
+ * ===================================================================== */
+
+const CONFIG = {
+  /**
+   * 登录 token（sessionId）。
+   * 获取方式：App → 开门助手 → 右上角齿轮 → 「查看 Token」/「复制 Token」，
+   * 然后粘贴到下面这对引号中间（不要带空格和换行）。
+   */
+  TOKEN: 'app:8a818285a120cf8c01a1b5b12cac5e14',
+
+  /**
+   * 可选访问口令：留空 '' = 不启用。
+   * 填写后，打开页面要先输入这个口令才能用（只做本地校验，
+   * 能挡住随手点开链接的人，挡不住懂技术的人，别当真正的安全措施）。
+   */
+  ACCESS_CODE: '',
+
+  /** 亲邻接口常量，与原 App 保持一致，一般不用动 */
+  BASE_URL: 'https://mobileapi3.qinlinkeji.com',
+  API_KEY: 'qiAnlPinP',
+  APP_VERSION: '4.9.3',
+
+  /** 本地缓存 key（换 token 后想丢弃旧缓存可以改版本号） */
+  CACHE_KEY: 'openDoorWeb.v1',
+};
+
+/* =====================================================================
+ *  以下是实现，通常不用改
+ * ===================================================================== */
+
+const AUTH_CODES = ['401', '403', '10001', '10002', '10003', '20001', '20002'];
+
+const DOOR_NAME_KEYS = ['doorControlName', 'name', 'doorName'];
+const DOOR_ID_KEYS = ['doorControlId', 'id', 'doorId'];
+const DOOR_LIST_KEYS = ['buildingDoorList', 'gateDoorList', 'doorList', 'userDoorList', 'list'];
+
+/* ---------------- MD5 ---------------- */
+
+/* 标准 MD5 常量表（RFC 1321），避免用 Math.sin 现算导致精度差异 */
+const MD5_K = [
+  0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
+  0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+  0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa, 0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+  0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed, 0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+  0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c, 0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
+  0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05, 0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+  0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
+  0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
+];
+
+const MD5_S = [
+  7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+  5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+  4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+  6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
+];
+
+/** 计算 MD5，返回 32 位大写十六进制（与原 App 的 md5Upper 一致） */
+function md5(text) {
+  const bytes = new TextEncoder().encode(String(text));
+  const bitLength = bytes.length * 8;
+  const totalLength = (((bytes.length + 1 + 8) + 63) >> 6) << 6; // 补位 + 64bit 长度，按 64 字节对齐
+  const buffer = new Uint8Array(totalLength);
+  buffer.set(bytes);
+  buffer[bytes.length] = 0x80;
+
+  const view = new DataView(buffer.buffer);
+  view.setUint32(totalLength - 8, bitLength >>> 0, true);
+  view.setUint32(totalLength - 4, Math.floor(bitLength / 0x100000000), true);
+
+  let a0 = 0x67452301;
+  let b0 = 0xefcdab89;
+  let c0 = 0x98badcfe;
+  let d0 = 0x10325476;
+
+  const words = new Uint32Array(16);
+
+  for (let offset = 0; offset < totalLength; offset += 64) {
+    for (let i = 0; i < 16; i++) words[i] = view.getUint32(offset + i * 4, true);
+
+    let A = a0;
+    let B = b0;
+    let C = c0;
+    let D = d0;
+
+    for (let i = 0; i < 64; i++) {
+      let F;
+      let g;
+      if (i < 16) {
+        F = (B & C) | (~B & D);
+        g = i;
+      } else if (i < 32) {
+        F = (D & B) | (~D & C);
+        g = (5 * i + 1) & 15;
+      } else if (i < 48) {
+        F = B ^ C ^ D;
+        g = (3 * i + 5) & 15;
+      } else {
+        F = C ^ (B | ~D);
+        g = (7 * i) & 15;
+      }
+
+      F = (F + A + MD5_K[i] + words[g]) | 0;
+      A = D;
+      D = C;
+      C = B;
+      const shift = MD5_S[i];
+      B = (B + ((F << shift) | (F >>> (32 - shift)))) | 0;
+    }
+
+    a0 = (a0 + A) | 0;
+    b0 = (b0 + B) | 0;
+    c0 = (c0 + C) | 0;
+    d0 = (d0 + D) | 0;
+  }
+
+  const out = new Uint8Array(16);
+  const outView = new DataView(out.buffer);
+  outView.setUint32(0, a0 >>> 0, true);
+  outView.setUint32(4, b0 >>> 0, true);
+  outView.setUint32(8, c0 >>> 0, true);
+  outView.setUint32(12, d0 >>> 0, true);
+
+  let hex = '';
+  for (let i = 0; i < out.length; i++) hex += out[i].toString(16).padStart(2, '0');
+  return hex.toUpperCase();
+}
+
+/* ---------------- 签名与请求 ---------------- */
+
+/** 按 key 升序拼 k=v，再拼后缀做 MD5（对应 QinlinAPI.sign） */
+function sign(fields, suffix) {
+  const content = Object.keys(fields)
+    .filter((key) => fields[key] !== null && fields[key] !== undefined)
+    .sort()
+    .map((key) => `${key}=${fields[key]}`)
+    .join('&');
+  return md5(`${content}&${suffix}`);
+}
+
+/** 补齐 timestamp / version / nonce 并计算 sign（对应 QinlinAPI.makePayload） */
+function makePayload(data, token) {
+  const payload = Object.assign({}, data);
+  payload.timestamp = Date.now();
+  payload.version = CONFIG.APP_VERSION;
+  payload.nonce = String(Math.floor(Math.random() * 90000) + 10000);
+
+  const signFields = Object.assign({}, payload, { token });
+  payload.sign = sign(signFields, `key=${CONFIG.API_KEY}`);
+  return payload;
+}
+
+/** 伪装客户端环境的请求头（对应 QinlinAPI.deviceHeaders） */
+function deviceHeaders() {
+  let openid = '';
+  const alphabet = '0123456789abcdef';
+  for (let i = 0; i < 16; i++) openid += alphabet[Math.floor(Math.random() * 16)];
+  return {
+    Qvendor: 'Xiaomi',
+    Openid: openid,
+    Qversioncode: '3113',
+    Qversionname: CONFIG.APP_VERSION,
+    Qchannel: 'xiaomi',
+    Qplatform: '0',
+  };
+}
+
+class ApiError extends Error {
+  constructor(message, isAuth) {
+    super(message);
+    this.name = 'ApiError';
+    this.isAuth = !!isAuth;
+  }
+}
+
+/** 统一解析响应（对应 QinlinAPI.parse） */
+function parseResponse(json) {
+  const code = json ? json.code : undefined;
+  if (code === undefined || String(code) !== '0') {
+    const message = (json && (json.message || json.msg)) || '请求失败';
+    const codeText = String(code === undefined || code === null ? -1 : code);
+    const isAuth =
+      AUTH_CODES.includes(codeText) ||
+      message.includes('登录') ||
+      String(message).toLowerCase().includes('token');
+    throw new ApiError(isAuth ? '登录状态已失效，请更新 HTML 里的 TOKEN' : message, isAuth);
+  }
+  return json.data;
+}
+
+/** 读响应：非 JSON 或网络异常都转成可读错误 */
+async function readJson(response) {
+  const text = await response.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch (e) {
+    throw new ApiError(`服务器返回异常（HTTP ${response.status}）`);
+  }
+  return parseResponse(json);
+}
+
+/** 业务接口：JSON 或表单提交，sessionId 放在 query（对应 QinlinAPI.postJSON） */
+async function postJSON(path, data, asForm) {
+  const token = CONFIG.TOKEN.trim();
+  const payload = makePayload(data, token);
+
+  const url = new URL(CONFIG.BASE_URL + path);
+  if (token) url.searchParams.set('sessionId', token);
+
+  const headers = deviceHeaders();
+  let body;
+  if (asForm) {
+    headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    body = Object.keys(payload)
+      .sort()
+      .map((key) => `${key}=${payload[key]}`)
+      .join('&');
+  } else {
+    headers['Content-Type'] = 'application/json; charset=utf-8';
+    body = JSON.stringify(payload);
+  }
+
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers,
+    body,
+    cache: 'no-store',
+  });
+  return readJson(response);
+}
+
+/** 开门接口：所有参数（含 sessionId）走 query（对应 QinlinAPI.postParams） */
+async function postParams(path, data) {
+  const token = CONFIG.TOKEN.trim();
+  const payload = makePayload(data, token);
+  payload.sessionId = token;
+
+  const query = Object.keys(payload)
+    .sort()
+    .map((key) => `${key}=${encodeURIComponent(payload[key])}`)
+    .join('&');
+
+  const response = await fetch(`${CONFIG.BASE_URL}${path}?${query}`, {
+    method: 'POST',
+    headers: Object.assign(deviceHeaders(), { 'Content-Type': 'application/json' }),
+    cache: 'no-store',
+  });
+  return readJson(response);
+}
+
+/* ---------------- 业务接口 ---------------- */
+
+/** 当前账号绑定的小区 */
+async function fetchCommunities() {
+  const data = await postJSON('/api/app/user/v2/communityInfo', { method: 'communityInfo' });
+  return parseCommunities(data);
+}
+
+/** 指定小区的门禁 */
+async function fetchDoors(communityId) {
+  const data = await postJSON(
+    '/api/app/user/v2/queryAllUserDoorByCache',
+    { communityId },
+    true
+  );
+  return parseDoors(data);
+}
+
+/** 开门 */
+async function requestOpenDoor(communityId, doorId) {
+  await postParams('/api/open/doorcontrol/v2/open', {
+    appChannel: 1,
+    doorControlId: doorId,
+    communityId,
+  });
+}
+
+/* ---------------- 数据解析（容错，结构变了也不至于整页崩） ---------------- */
+
+function toInt(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
+  if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) return parseInt(value, 10);
+  return null;
+}
+
+function parseCommunities(data) {
+  let items = [];
+  if (Array.isArray(data)) {
+    items = data;
+  } else if (data && typeof data === 'object') {
+    const nested = data.communityList || data.list || data.data;
+    items = Array.isArray(nested) ? nested : [data];
+  }
+
+  const result = [];
+  const seen = new Set();
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue;
+    const id = toInt(item.communityId !== undefined ? item.communityId : item.id);
+    if (id === null || seen.has(id)) continue;
+    seen.add(id);
+    const name = item.communityName || item.name || `小区${id}`;
+    result.push({ id, name: String(name) });
+  }
+  return result;
+}
+
+function parseDoors(data) {
+  const result = [];
+  const seen = new Set();
+
+  const add = (dict) => {
+    if (!dict || typeof dict !== 'object') return;
+    let id = null;
+    for (const key of DOOR_ID_KEYS) {
+      id = toInt(dict[key]);
+      if (id !== null) break;
+    }
+    if (id === null || seen.has(id)) return;
+    seen.add(id);
+
+    let name = '';
+    for (const key of DOOR_NAME_KEYS) {
+      if (dict[key]) {
+        name = String(dict[key]);
+        break;
+      }
+    }
+    if (!name) name = `门禁${id}`;
+    result.push({ id, name });
+  };
+
+  const walk = (value, depth) => {
+    if (depth > 6 || value === null || value === undefined) return;
+    if (Array.isArray(value)) {
+      value.forEach((item) => add(item));
+      return;
+    }
+    if (typeof value !== 'object') return;
+
+    for (const key of DOOR_LIST_KEYS) {
+      const list = value[key];
+      if (Array.isArray(list)) list.forEach((item) => add(item));
+    }
+    for (const key of Object.keys(value)) {
+      const nested = value[key];
+      if (nested && typeof nested === 'object') walk(nested, depth + 1);
+    }
+  };
+
+  walk(data, 0);
+  return result;
+}
+</script>
+
+<script>
+/* =====================================================================
+ *  页面逻辑
+ * ===================================================================== */
+
+const state = {
+  communities: [],
+  communityId: null,
+  doors: [],
+  updatedAt: null,
+  busy: false,
+  loading: false,
+};
+
+const el = {
+  list: document.getElementById('list'),
+  empty: document.getElementById('empty'),
+  emptyText: document.getElementById('emptyText'),
+  emptyRetry: document.getElementById('emptyRetry'),
+  communityBtn: document.getElementById('communityBtn'),
+  communityName: document.getElementById('communityName'),
+  communityChev: document.getElementById('communityChev'),
+  refreshBtn: document.getElementById('refreshBtn'),
+  banner: document.getElementById('banner'),
+  updatedAt: document.getElementById('updatedAt'),
+  tokenLabel: document.getElementById('tokenLabel'),
+  overlay: document.getElementById('overlay'),
+  busyText: document.getElementById('busyText'),
+  toast: document.getElementById('toast'),
+  sheetMask: document.getElementById('sheetMask'),
+  sheetList: document.getElementById('sheetList'),
+  gateMask: document.getElementById('gateMask'),
+  gateInput: document.getElementById('gateInput'),
+  gateBtn: document.getElementById('gateBtn'),
+  gateErr: document.getElementById('gateErr'),
+};
+
+const DOOR_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+  stroke-linecap="round" stroke-linejoin="round">
+  <path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h8"></path>
+  <path d="M14 3l4 2v14l-4 2z"></path>
+  <circle cx="11" cy="12" r="1.1" fill="currentColor" stroke="none"></circle>
+</svg>`;
+
+/* ---------------- 工具 ---------------- */
+
+function tokenConfigured() {
+  const token = CONFIG.TOKEN.trim();
+  return token.length > 0 && !/REPLACE_WITH/i.test(token);
+}
+
+function maskToken(token) {
+  if (!token) return '—';
+  if (token.length <= 12) return token;
+  return `${token.slice(0, 5)}…${token.slice(-5)}`;
+}
+
+function formatTime(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+let toastTimer = null;
+function toast(message, isError) {
+  el.toast.textContent = message;
+  el.toast.className = `toast show${isError ? ' err' : ''}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.toast.className = 'toast';
+  }, isError ? 3200 : 1800);
+}
+
+function showBanner(html) {
+  el.banner.innerHTML = html;
+  el.banner.classList.add('show');
+}
+
+function hideBanner() {
+  el.banner.classList.remove('show');
+}
+
+function showBusy(text) {
+  state.busy = true;
+  el.busyText.textContent = text;
+  el.overlay.classList.add('show');
+  renderDoors();
+}
+
+function hideBusy() {
+  state.busy = false;
+  el.overlay.classList.remove('show');
+  renderDoors();
+}
+
+function vibrate(ms) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+/* ---------------- 缓存 ---------------- */
+
+function cacheKey() {
+  // token 变了就别用旧缓存，避免串号
+  return `${CONFIG.CACHE_KEY}.${md5(CONFIG.TOKEN.trim()).slice(0, 8)}`;
+}
+
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(cacheKey());
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (Array.isArray(saved.communities)) state.communities = saved.communities;
+    if (Array.isArray(saved.doors)) state.doors = saved.doors;
+    if (saved.communityId !== undefined) state.communityId = saved.communityId;
+    if (saved.updatedAt) state.updatedAt = new Date(saved.updatedAt);
+  } catch (e) {
+    /* 缓存坏了就当没有 */
+  }
+}
+
+function saveCache() {
+  try {
+    localStorage.setItem(
+      cacheKey(),
+      JSON.stringify({
+        communities: state.communities,
+        communityId: state.communityId,
+        doors: state.doors,
+        updatedAt: state.updatedAt ? state.updatedAt.toISOString() : null,
+      })
+    );
+  } catch (e) {
+    /* 隐私模式下 localStorage 可能不可用，忽略 */
+  }
+}
+
+/* ---------------- 渲染 ---------------- */
+
+function currentCommunity() {
+  return state.communities.find((item) => item.id === state.communityId) || null;
+}
+
+function renderHeader() {
+  const community = currentCommunity();
+  el.communityName.textContent = community ? community.name : '未选择小区';
+  el.communityBtn.disabled = state.communities.length < 2 || state.busy;
+  el.communityChev.hidden = state.communities.length < 2;
+
+  el.updatedAt.textContent = state.updatedAt
+    ? `更新于 ${formatTime(state.updatedAt)}`
+    : '—';
+  el.tokenLabel.textContent = `token: ${maskToken(CONFIG.TOKEN.trim())}`;
+}
+
+function renderDoors() {
+  const doors = state.doors;
+  el.list.innerHTML = '';
+
+  for (const door of doors) {
+    const button = document.createElement('button');
+    button.className = 'door';
+    button.disabled = state.busy;
+    button.innerHTML = `
+      <span class="glyph">${DOOR_ICON}</span>
+      <span class="meta">
+        <span class="name"></span>
+        <span class="hint">${state.busy ? '处理中…' : '轻触开门'}</span>
+      </span>
+      <span class="chev">›</span>`;
+    button.querySelector('.name').textContent = door.name;
+    button.addEventListener('click', () => handleOpenDoor(door, button));
+    el.list.appendChild(button);
+  }
+
+  const isEmpty = doors.length === 0;
+  el.empty.classList.toggle('show', isEmpty && !state.loading);
+  el.list.style.display = isEmpty ? 'none' : 'flex';
+
+  if (isEmpty) {
+    if (!tokenConfigured()) {
+      el.emptyText.textContent = '还没有配置 token';
+      el.emptyRetry.hidden = true;
+    } else {
+      el.emptyText.textContent = state.loading ? '正在加载门禁…' : '暂无可用门禁';
+      el.emptyRetry.hidden = false;
+    }
+  }
+
+  renderHeader();
+}
+
+/* ---------------- 数据加载 ---------------- */
+
+function applyCommunities(list) {
+  state.communities = list;
+  if (!list.some((item) => item.id === state.communityId)) {
+    state.communityId = list.length ? list[0].id : null;
+  }
+}
+
+/** 全量刷新：小区列表 + 当前小区门禁 */
+async function refresh(options) {
+  const opts = options || {};
+  if (state.loading || state.busy) return;
+  if (!tokenConfigured()) {
+    renderDoors();
+    showBanner('还没有配置 token。请把 <b>CONFIG.TOKEN</b> 换成你自己的 sessionId（App → 开门助手 → 右上角齿轮 → 查看 Token）。');
+    return;
+  }
+
+  state.loading = true;
+  hideBanner();
+  el.refreshBtn.classList.add('spinning');
+  if (state.doors.length === 0) renderDoors();
+
+  try {
+    const communities = await fetchCommunities();
+    if (communities.length === 0) {
+      throw new ApiError('该账号未绑定小区');
+    }
+    applyCommunities(communities);
+
+    const doors = await fetchDoors(state.communityId);
+    state.doors = doors;
+    state.updatedAt = new Date();
+    saveCache();
+    hideBanner();
+    if (!opts.silent && opts.toastOnSuccess) toast('已刷新');
+  } catch (error) {
+    handleError(error);
+  } finally {
+    state.loading = false;
+    el.refreshBtn.classList.remove('spinning');
+    renderDoors();
+  }
+}
+
+/** 切换小区：只重拉门禁 */
+async function switchCommunity(community) {
+  if (state.busy || state.loading || community.id === state.communityId) return;
+
+  state.busy = true;
+  showBusy('正在切换小区…');
+  hideSheet();
+
+  try {
+    const doors = await fetchDoors(community.id);
+    state.communityId = community.id;
+    state.doors = doors;
+    state.updatedAt = new Date();
+    saveCache();
+    hideBanner();
+  } catch (error) {
+    handleError(error);
+  } finally {
+    hideBusy();
+    renderDoors();
+  }
+}
+
+/** 开门 */
+async function handleOpenDoor(door, button) {
+  if (state.busy) return;
+  if (!state.communityId) {
+    toast('还没有选择小区', true);
+    return;
+  }
+
+  vibrate(18);
+  state.busy = true;
+  button.classList.add('busy');
+  showBusy('正在开门…');
+
+  try {
+    await requestOpenDoor(state.communityId, door.id);
+    vibrate([12, 60, 24]);
+    toast('开门成功');
+  } catch (error) {
+    if (error.isAuth) {
+      showBanner('登录状态已失效。<b>请更新 HTML 里的 CONFIG.TOKEN</b>，然后重新部署。');
+    }
+    toast(error.message || '开门失败', true);
+  } finally {
+    button.classList.remove('busy');
+    hideBusy();
+  }
+}
+
+function handleError(error) {
+  if (error.isAuth) {
+    showBanner('登录状态已失效。<b>请更新 HTML 里的 CONFIG.TOKEN</b>，然后重新部署。');
+    toast('token 已失效', true);
+  } else {
+    toast(error.message || '加载失败', true);
+  }
+}
+
+/* ---------------- 弹层 ---------------- */
+
+function openSheet() {
+  if (state.communities.length < 2) return;
+  el.sheetList.innerHTML = '';
+  for (const community of state.communities) {
+    const item = document.createElement('button');
+    item.className = 'sheet-item';
+    const active = community.id === state.communityId;
+    item.innerHTML = `<span></span><span class="tick">${active ? '✓' : ''}</span>`;
+    item.querySelector('span').textContent = community.name;
+    item.addEventListener('click', () => switchCommunity(community));
+    el.sheetList.appendChild(item);
+  }
+  el.sheetMask.classList.add('show');
+}
+
+function hideSheet() {
+  el.sheetMask.classList.remove('show');
+}
+
+/* ---------------- 口令门 ---------------- */
+
+function initGate() {
+  const code = (CONFIG.ACCESS_CODE || '').trim();
+  if (!code) return;
+
+  let unlocked = false;
+  try {
+    unlocked = sessionStorage.getItem('openDoorWeb.unlocked') === '1';
+  } catch (e) {
+    unlocked = false;
+  }
+  if (unlocked) return;
+
+  el.gateMask.classList.add('show');
+  setTimeout(() => el.gateInput.focus(), 120);
+
+  const submit = () => {
+    const input = el.gateInput.value.trim();
+    if (input === code) {
+      try {
+        sessionStorage.setItem('openDoorWeb.unlocked', '1');
+      } catch (e) {
+        /* 忽略 */
+      }
+      el.gateMask.classList.remove('show');
+      el.gateErr.textContent = '';
+      boot();
+    } else {
+      el.gateErr.textContent = '口令不对';
+      el.gateInput.value = '';
+      el.gateInput.focus();
+    }
+  };
+
+  el.gateBtn.addEventListener('click', submit);
+  el.gateInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') submit();
+  });
+}
+
+/* ---------------- 启动 ---------------- */
+
+function bindEvents() {
+  el.refreshBtn.addEventListener('click', () => refresh({ toastOnSuccess: true }));
+  el.communityBtn.addEventListener('click', openSheet);
+  el.emptyRetry.addEventListener('click', () => refresh({ toastOnSuccess: true }));
+  el.sheetMask.addEventListener('click', (event) => {
+    if (event.target === el.sheetMask) hideSheet();
+  });
+
+  el.tokenLabel.addEventListener('click', async () => {
+    const token = CONFIG.TOKEN.trim();
+    if (!tokenConfigured()) {
+      toast('还没有配置 token', true);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(token);
+      toast('token 已复制');
+    } catch (e) {
+      toast('当前浏览器不允许复制', true);
+    }
+  });
+
+  // 切回页面且数据超过 3 分钟时静默刷新
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (state.loading || state.busy) return;
+    const stale = !state.updatedAt || Date.now() - state.updatedAt.getTime() > 3 * 60 * 1000;
+    if (stale) refresh({ silent: true });
+  });
+}
+
+function boot() {
+  bindEvents();
+
+  if (!tokenConfigured()) {
+    renderDoors();
+    showBanner('还没有配置 token。请把 <b>CONFIG.TOKEN</b> 换成你自己的 sessionId（App → 开门助手 → 右上角齿轮 → 查看 Token）。');
+    return;
+  }
+
+  loadCache();
+  renderDoors();
+  refresh({ silent: true });
+}
+
+initGate();
+if (!(CONFIG.ACCESS_CODE || '').trim()) boot();
+</script>
+</body>
+</html>
