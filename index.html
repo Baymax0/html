@@ -283,26 +283,29 @@
   }
   .busy-box .txt { font-size: 14px; color: #dfe1e5; }
 
-  /* ---------- Toast ---------- */
+  /* ---------- Toast（屏幕正中，大一点） ---------- */
   .toast {
     position: fixed;
     left: 50%;
-    bottom: calc(env(safe-area-inset-bottom) + 28px);
-    transform: translate(-50%, 12px);
+    top: 50%;
+    transform: translate(-50%, calc(-50% + 10px)) scale(.96);
     z-index: 60;
-    max-width: min(86vw, 420px);
-    padding: 12px 20px;
-    border-radius: 999px;
-    background: rgba(240, 241, 244, .96);
+    width: max-content;
+    max-width: min(92vw, 560px);
+    padding: clamp(16px, 4.5vw, 22px) clamp(24px, 8vw, 40px);
+    border-radius: clamp(16px, 4.5vw, 22px);
+    background: rgba(240, 241, 244, .97);
     color: #111;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: clamp(17px, 5vw, 21px);
+    line-height: 1.35;
+    font-weight: 600;
     text-align: center;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .22s ease, transform .22s ease;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
+    transition: opacity .2s ease, transform .2s ease;
   }
-  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .toast.err { background: rgba(255, 69, 58, .96); color: #fff; }
 
   /* ---------- 底部弹层 ---------- */
@@ -444,7 +447,7 @@
   </div>
 
   <footer>
-    <span id="updatedAt">—</span>
+    <span id="updatedAt">可保存书签方便下次使用</span>
     <span class="token" id="tokenLabel" title="点击复制 token">token: —</span>
   </footer>
 </div>
@@ -485,11 +488,18 @@
 
 const CONFIG = {
   /**
-   * 登录 token（sessionId）。
-   * 获取方式：App → 开门助手 → 右上角齿轮 → 「查看 Token」/「复制 Token」，
-   * 然后粘贴到下面这对引号中间（不要带空格和换行）。
+   * 登录 token（sessionId）不再写死在 HTML 里。
+   * 页面启动时会去读同目录的 token.txt（见下面的 TOKEN_FILE），
+   * 以后换 token 只要改 token.txt 那个文件就行，HTML 不用动、也不用改这里的值。
+   * 只是本地兜底：只有 token.txt 读不到时才会用到它，一般保持 '' 即可。
    */
-  TOKEN: 'app:8a818285a120cf8c01a1b5b12cac5e14',
+  TOKEN: '',
+
+  /**
+   * 存放 token 的文件名，和 index.html 同目录（相对路径）。
+   * 文件内容：一行一个 token（可带 # 注释行，会忽略），别加引号也行。
+   */
+  TOKEN_FILE: 'token.txt',
 
   /**
    * 可选访问口令：留空 '' = 不启用。
@@ -666,7 +676,7 @@ function parseResponse(json) {
       AUTH_CODES.includes(codeText) ||
       message.includes('登录') ||
       String(message).toLowerCase().includes('token');
-    throw new ApiError(isAuth ? '登录状态已失效，请更新 HTML 里的 TOKEN' : message, isAuth);
+    throw new ApiError(isAuth ? '登录状态已失效，请更新 token.txt 里的 token' : message, isAuth);
   }
   return json.data;
 }
@@ -935,6 +945,13 @@ function vibrate(ms) {
   if (navigator.vibrate) navigator.vibrate(ms);
 }
 
+/** 开门成功后遮罩再多留一会儿，避免刚显示就消失导致页面闪一下 */
+const OPEN_SUCCESS_DELAY = 500;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /* ---------------- 缓存 ---------------- */
 
 function cacheKey() {
@@ -984,9 +1001,7 @@ function renderHeader() {
   el.communityBtn.disabled = state.communities.length < 2 || state.busy;
   el.communityChev.hidden = state.communities.length < 2;
 
-  el.updatedAt.textContent = state.updatedAt
-    ? `更新于 ${formatTime(state.updatedAt)}`
-    : '—';
+  // 页脚固定提示语（时间戳不再显示，文案写在 HTML 里）
   el.tokenLabel.textContent = `token: ${maskToken(CONFIG.TOKEN.trim())}`;
 }
 
@@ -1042,7 +1057,7 @@ async function refresh(options) {
   if (state.loading || state.busy) return;
   if (!tokenConfigured()) {
     renderDoors();
-    showBanner('还没有配置 token。请把 <b>CONFIG.TOKEN</b> 换成你自己的 sessionId（App → 开门助手 → 右上角齿轮 → 查看 Token）。');
+    showBanner(missingTokenBanner());
     return;
   }
 
@@ -1109,24 +1124,30 @@ async function handleOpenDoor(door, button) {
   button.classList.add('busy');
   showBusy('正在开门…');
 
+  let opened = false;
   try {
     await requestOpenDoor(state.communityId, door.id);
+    opened = true;
     vibrate([12, 60, 24]);
-    toast('开门成功');
+    await sleep(OPEN_SUCCESS_DELAY); // 遮罩多停 0.5s，避免一闪而过
   } catch (error) {
     if (error.isAuth) {
-      showBanner('登录状态已失效。<b>请更新 HTML 里的 CONFIG.TOKEN</b>，然后重新部署。');
+      showBanner('登录状态已失效。<b>请更新同目录 token.txt 里的 token</b>，然后重新部署。');
     }
+    hideBusy();
     toast(error.message || '开门失败', true);
   } finally {
     button.classList.remove('busy');
     hideBusy();
   }
+
+  // 遮罩收起后再弹居中的成功提示，两个东西不会叠在一起
+  if (opened) toast('开门成功');
 }
 
 function handleError(error) {
   if (error.isAuth) {
-    showBanner('登录状态已失效。<b>请更新 HTML 里的 CONFIG.TOKEN</b>，然后重新部署。');
+    showBanner('登录状态已失效。<b>请更新同目录 token.txt 里的 token</b>，然后重新部署。');
     toast('token 已失效', true);
   } else {
     toast(error.message || '加载失败', true);
@@ -1233,7 +1254,7 @@ function boot() {
 
   if (!tokenConfigured()) {
     renderDoors();
-    showBanner('还没有配置 token。请把 <b>CONFIG.TOKEN</b> 换成你自己的 sessionId（App → 开门助手 → 右上角齿轮 → 查看 Token）。');
+    showBanner(missingTokenBanner());
     return;
   }
 
@@ -1242,8 +1263,57 @@ function boot() {
   refresh({ silent: true });
 }
 
-initGate();
-if (!(CONFIG.ACCESS_CODE || '').trim()) boot();
+/* ---------------- token.txt 读取 ---------------- */
+
+/** token.txt 读取失败的原因，用于页面顶部提示；读取成功时为空 */
+let tokenLoadNote = '';
+
+/** 取文件里第一行有效内容（跳过空行和 # 注释，允许首尾引号/空格） */
+function parseTokenFile(text) {
+  const lines = String(text).replace(/^\uFEFF/, '').split(/\r?\n/);
+  for (const line of lines) {
+    const value = line.trim();
+    if (!value || value.startsWith('#')) continue;
+    return value.replace(/^["'`]+|["'`]+$/g, '').trim();
+  }
+  return '';
+}
+
+/** 从同目录 token.txt 读 token；读不到就把 CONFIG.TOKEN 留空并记下原因 */
+async function loadToken() {
+  if (location.protocol === 'file:') {
+    tokenLoadNote = '当前是用 file:// 直接打开的，浏览器不允许读取同目录文件';
+    return;
+  }
+  try {
+    const response = await fetch(`${CONFIG.TOKEN_FILE}?v=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const token = parseTokenFile(await response.text());
+    if (!token) throw new Error('文件里没有内容');
+    if (!/^[A-Za-z0-9:._\-]+$/.test(token)) {
+      throw new Error('内容格式不对（可能拿到的是网页而不是纯文本 token）');
+    }
+    CONFIG.TOKEN = token;
+    tokenLoadNote = '';
+  } catch (error) {
+    CONFIG.TOKEN = '';
+    tokenLoadNote = (error && error.message) || '读取失败';
+  }
+}
+
+/** 没读到 token 时页面顶部显示的统一提示 */
+function missingTokenBanner() {
+  if (tokenLoadNote) {
+    return `读取 <b>${CONFIG.TOKEN_FILE}</b> 失败：${tokenLoadNote}。<br>请确认它和 index.html 在同一目录、内容是纯文本 token，然后重新部署。`;
+  }
+  return `还没有配置 token。请把 sessionId 写进同目录的 <b>${CONFIG.TOKEN_FILE}</b>（App → 开门助手 → 右上角齿轮 → 查看 Token）。`;
+}
+
+(async () => {
+  await loadToken();
+  initGate();
+  if (!(CONFIG.ACCESS_CODE || '').trim()) boot();
+})();
 </script>
 </body>
 </html>
