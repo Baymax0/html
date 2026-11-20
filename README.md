@@ -1,28 +1,36 @@
 # html
 
-开门网页（静态页，Cloudflare Workers 部署：https://opendoor.jzdd327.workers.dev）
+开门网页（静态页；CloudBase 国内站已部署，Cloudflare Workers 仍保留：https://opendoor.jzdd327.workers.dev）
 
 ## 页面
 
 | 页面 | 地址 | 作用 |
 | --- | --- | --- |
 | `index.html` | `/` 或 `/index.html` | 手动开门：点哪个门开哪个 |
-| `autoOpen.html` | `/autoOpen.html` | 自动开门：打开页面、拿到门禁列表后，自动请求打开名字里带「单元」的那扇门 |
+| `auto.html` | `/auto.html` | 自动开门：打开页面、拿到门禁列表后，自动请求打开名字里带「单元」的那扇门 |
 
 两个页面主体、样式、token 读取完全一致，共用同目录的 `token.txt`；只有「是否自动开门」这一处逻辑不同。
 
-## 换 token 只要改 token.txt
+## token 从哪来：手填优先，留空才读 token.txt
 
-页面里不再写死 token，启动时用 `fetch('token.txt')` 读取同目录的 `token.txt`：
+两个页面的 `<script>` 顶部的 `CONFIG` 里有 `TOKEN` 变量，规则是**手填优先**：
 
-1. 打开 `token.txt`，把里面 `app:...` 那一行改成新 token（保留 `#` 开头的注释行不影响）；
-2. 重新部署（把 `token.txt` 一起上传，它和两个 html 必须在同一目录）；
-3. 手机/浏览器刷新页面即可，html 不用动。
+| `CONFIG.TOKEN` | 行为 |
+| --- | --- |
+| `''`（默认） | 启动时 `fetch('token.txt')`，读同目录的 token.txt |
+| 填了内容 | 直接用这个值，**完全不请求 token.txt**（临时换号、临时部署很方便） |
 
-`index.html` 的 `CONFIG.TOKEN` 现在只是兜底值（默认空），`CONFIG.TOKEN_FILE` 是文件名。
-页面顶部若提示「读取 token.txt 失败」，就是 token.txt 没上传、路径不对，或者被当成网页返回了。
+日常改 token 的推荐做法（不用动 HTML）：
 
-## autoOpen.html 的自动开门规则
+1. 打开 `token.txt`，把里面 `app:...` 那一行改成新 token（`#` 开头的注释行不影响）；
+2. 重新部署（`token.txt` 要和两个 html 在同一目录）；
+3. 手机/浏览器刷新页面即可。
+
+想临时手填就用另一种方式：把 `CONFIG.TOKEN: ''` 改成 `CONFIG.TOKEN: 'app:xxxxxxxx'`，再部署。
+填错了（有空格之类）页面顶部会提示「CONFIG.TOKEN 里填的 token 用不了」，改回 `''` 就恢复读 token.txt。
+`CONFIG.TOKEN_FILE` 是文件名（默认 `token.txt`）；页面顶部若提示「读取 token.txt 失败」，就是文件没上传、路径不对，或者被当成网页返回了。
+
+## auto.html 的自动开门规则
 
 - 打开页面并**成功拿到门禁列表**后，自动打开第一扇名字含「单元」的门，用户不用再点；
 - 列表里没有含「单元」的门时，不请求开门，只在顶部提示「请手动点击」；

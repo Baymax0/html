@@ -16,6 +16,12 @@ cd "$(dirname "$0")"
 # 只上传这三个上线文件，避免把 .git / .DS_Store / README 传上去
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
-cp index.html autoOpen.html token.txt "$STAGE/"
+
+FILES="index.html token.txt"
+for f in auto.html autoOpen.html; do
+  [ -f "$f" ] && FILES="$FILES $f"
+done
+
+cp $FILES "$STAGE/"
 
 tcb hosting deploy "$STAGE" -e "$ENV_ID" --verify

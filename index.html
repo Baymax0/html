@@ -4,20 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f4f5f7">
 <title>开门助手</title>
 <style>
   :root {
-    --bg: #0a0a0b;
-    --card: #17181a;
-    --card-hi: #202124;
-    --line: rgba(255, 255, 255, .08);
-    --text: #f2f3f5;
-    --sub: #94979d;
-    --accent: #2cb458;
-    --accent-soft: rgba(44, 180, 88, .14);
-    --danger: #ff453a;
+    color-scheme: light;
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --card-hi: #f1f3f6;
+    --line: rgba(17, 20, 24, .10);
+    --text: #14171c;
+    --sub: #6b7280;
+    --accent: #12a150;
+    --accent-soft: rgba(18, 161, 80, .12);
+    --danger: #d92d20;
     --radius: 18px;
   }
 
@@ -37,7 +38,7 @@
     min-height: 100vh;
     min-height: 100dvh;
     background:
-      radial-gradient(120% 60% at 50% -10%, rgba(44, 180, 88, .16), transparent 60%),
+      radial-gradient(120% 60% at 50% -10%, rgba(18, 161, 80, .10), transparent 60%),
       var(--bg);
     padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 20px);
   }
@@ -119,14 +120,14 @@
     margin: 14px 0 0;
     padding: 13px 15px;
     border-radius: 14px;
-    background: rgba(255, 69, 58, .12);
-    border: 1px solid rgba(255, 69, 58, .28);
-    color: #ffb4ae;
+    background: rgba(217, 45, 32, .07);
+    border: 1px solid rgba(217, 45, 32, .20);
+    color: #b42318;
     font-size: 13px;
     line-height: 1.55;
   }
   .banner.show { display: block; }
-  .banner b { color: #ffd9d5; }
+  .banner b { color: #912018; }
 
   /* ---------- 门禁列表 ---------- */
   .list { margin-top: 16px; display: flex; flex-direction: column; gap: 11px; }
@@ -140,7 +141,8 @@
     padding: 16px 16px;
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    background: linear-gradient(180deg, var(--card-hi), var(--card));
+    background: linear-gradient(180deg, #ffffff, #fbfcfd);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 10px 24px rgba(16, 24, 40, .05);
     color: var(--text);
     text-align: left;
     font: inherit;
@@ -159,7 +161,7 @@
   }
   .door:active { transform: scale(.985); }
   .door:active::after { opacity: 1; }
-  .door[disabled] { filter: saturate(.4) brightness(.85); pointer-events: none; }
+  .door[disabled] { filter: saturate(.4); opacity: .6; pointer-events: none; }
 
   .door .glyph {
     width: 46px;
@@ -228,7 +230,7 @@
     justify-content: space-between;
     gap: 10px;
     font-size: 11.5px;
-    color: #62656b;
+    color: #6b7280;
   }
   footer .token {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -241,7 +243,7 @@
   footer button {
     border: 0;
     background: none;
-    color: #62656b;
+    color: #6b7280;
     font: inherit;
     padding: 0;
     cursor: pointer;
@@ -257,7 +259,7 @@
     display: none;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, .55);
+    background: rgba(15, 18, 22, .30);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
   }
@@ -270,18 +272,19 @@
     gap: 14px;
     padding: 26px 34px;
     border-radius: 22px;
-    background: rgba(23, 24, 26, .92);
+    background: rgba(255, 255, 255, .97);
     border: 1px solid var(--line);
+    box-shadow: 0 24px 60px rgba(16, 24, 40, .18);
   }
   .busy-box .ring {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    border: 3px solid rgba(255, 255, 255, .16);
+    border: 3px solid rgba(17, 20, 24, .12);
     border-top-color: var(--accent);
     animation: spin .8s linear infinite;
   }
-  .busy-box .txt { font-size: 14px; color: #dfe1e5; }
+  .busy-box .txt { font-size: 14px; color: #3f4550; }
 
   /* ---------- Toast（屏幕正中，大一点） ---------- */
   .toast {
@@ -294,19 +297,19 @@
     max-width: min(92vw, 560px);
     padding: clamp(16px, 4.5vw, 22px) clamp(24px, 8vw, 40px);
     border-radius: clamp(16px, 4.5vw, 22px);
-    background: rgba(240, 241, 244, .97);
-    color: #111;
+    background: rgba(23, 24, 26, .95);
+    color: #fff;
     font-size: clamp(17px, 5vw, 21px);
     line-height: 1.35;
     font-weight: 600;
     text-align: center;
     opacity: 0;
     pointer-events: none;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
+    box-shadow: 0 18px 50px rgba(16, 24, 40, .30);
     transition: opacity .2s ease, transform .2s ease;
   }
   .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  .toast.err { background: rgba(255, 69, 58, .96); color: #fff; }
+  .toast.err { background: rgba(217, 45, 32, .96); color: #fff; }
 
   /* ---------- 底部弹层 ---------- */
   .sheet-mask {
@@ -316,7 +319,7 @@
     display: none;
     align-items: flex-end;
     justify-content: center;
-    background: rgba(0, 0, 0, .5);
+    background: rgba(15, 18, 22, .30);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
   }
@@ -327,8 +330,9 @@
     max-width: 560px;
     padding: 18px 18px calc(env(safe-area-inset-bottom) + 18px);
     border-radius: 24px 24px 0 0;
-    background: #141518;
+    background: #ffffff;
     border-top: 1px solid var(--line);
+    box-shadow: 0 -12px 40px rgba(16, 24, 40, .12);
     transform: translateY(100%);
     transition: transform .26s cubic-bezier(.22, .8, .3, 1);
   }
@@ -378,6 +382,7 @@
     border-radius: 22px;
     background: var(--card);
     border: 1px solid var(--line);
+    box-shadow: 0 20px 50px rgba(16, 24, 40, .12);
     text-align: center;
   }
   .gate h2 { margin: 0 0 6px; font-size: 18px; }
@@ -387,7 +392,7 @@
     padding: 13px 14px;
     border-radius: 12px;
     border: 1px solid var(--line);
-    background: #0f1011;
+    background: #f7f8fa;
     color: var(--text);
     font: inherit;
     font-size: 16px;
@@ -395,7 +400,7 @@
     letter-spacing: 2px;
     outline: none;
   }
-  .gate input:focus { border-color: rgba(44, 180, 88, .55); }
+  .gate input:focus { border-color: rgba(18, 161, 80, .55); }
   .gate button {
     width: 100%;
     margin-top: 12px;
@@ -403,7 +408,7 @@
     border: 0;
     border-radius: 12px;
     background: var(--accent);
-    color: #04210f;
+    color: #ffffff;
     font: inherit;
     font-size: 16px;
     font-weight: 600;
@@ -488,10 +493,10 @@
 
 const CONFIG = {
   /**
-   * 登录 token（sessionId）不再写死在 HTML 里。
-   * 页面启动时会去读同目录的 token.txt（见下面的 TOKEN_FILE），
-   * 以后换 token 只要改 token.txt 那个文件就行，HTML 不用动、也不用改这里的值。
-   * 只是本地兜底：只有 token.txt 读不到时才会用到它，一般保持 '' 即可。
+   * 手填 token（sessionId），优先级最高：
+   *   - 填了内容：直接用这个值，不再请求 token.txt（临时换号、没地方放文件时用）；
+   *   - 保持 ''：启动时去读同目录的 token.txt（见下面的 TOKEN_FILE）。
+   * 填了以后注意别把这个 HTML 提交到公开仓库。
    */
   TOKEN: '',
 
@@ -1263,10 +1268,21 @@ function boot() {
   refresh({ silent: true });
 }
 
-/* ---------------- token.txt 读取 ---------------- */
+/* ---------------- token：手填优先，留空则读 token.txt ---------------- */
 
-/** token.txt 读取失败的原因，用于页面顶部提示；读取成功时为空 */
+/** token 读取失败的原因，用于页面顶部提示；读取成功时为空 */
 let tokenLoadNote = '';
+
+/** token 来源：'manual' = CONFIG.TOKEN 手填，'file' = 同目录 token.txt */
+let tokenSource = 'file';
+
+/** 只允许字母、数字和 : . _ - ，防止把整段 HTML 当成 token */
+const TOKEN_PATTERN = /^[A-Za-z0-9:._\-]+$/;
+
+/** 去掉首尾的引号/反引号/空格（手填或文件里带引号都能用） */
+function cleanToken(value) {
+  return String(value).replace(/^["'`]+|["'`]+$/g, '').trim();
+}
 
 /** 取文件里第一行有效内容（跳过空行和 # 注释，允许首尾引号/空格） */
 function parseTokenFile(text) {
@@ -1279,8 +1295,27 @@ function parseTokenFile(text) {
   return '';
 }
 
-/** 从同目录 token.txt 读 token；读不到就把 CONFIG.TOKEN 留空并记下原因 */
+/**
+ * 取 token：CONFIG.TOKEN 填了就直接用，留空才去读同目录 token.txt。
+ * 两种情况都失败时，把 CONFIG.TOKEN 留空并记下原因，由顶部提示显示。
+ */
 async function loadToken() {
+  const manual = cleanToken(CONFIG.TOKEN || '');
+
+  if (manual) {
+    tokenSource = 'manual';
+    if (!TOKEN_PATTERN.test(manual)) {
+      CONFIG.TOKEN = '';
+      tokenLoadNote = '只允许字母、数字和 : . _ -';
+      return;
+    }
+    CONFIG.TOKEN = manual;
+    tokenLoadNote = '';
+    return;
+  }
+
+  tokenSource = 'file';
+
   if (location.protocol === 'file:') {
     tokenLoadNote = '当前是用 file:// 直接打开的，浏览器不允许读取同目录文件';
     return;
@@ -1288,9 +1323,9 @@ async function loadToken() {
   try {
     const response = await fetch(`${CONFIG.TOKEN_FILE}?v=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const token = parseTokenFile(await response.text());
+    const token = cleanToken(parseTokenFile(await response.text()));
     if (!token) throw new Error('文件里没有内容');
-    if (!/^[A-Za-z0-9:._\-]+$/.test(token)) {
+    if (!TOKEN_PATTERN.test(token)) {
       throw new Error('内容格式不对（可能拿到的是网页而不是纯文本 token）');
     }
     CONFIG.TOKEN = token;
@@ -1303,6 +1338,9 @@ async function loadToken() {
 
 /** 没读到 token 时页面顶部显示的统一提示 */
 function missingTokenBanner() {
+  if (tokenSource === 'manual') {
+    return `CONFIG.TOKEN 里填的 token 用不了：${tokenLoadNote}。<br>把 CONFIG.TOKEN 改成 '' 就会回到读取同目录的 <b>${CONFIG.TOKEN_FILE}</b>。`;
+  }
   if (tokenLoadNote) {
     return `读取 <b>${CONFIG.TOKEN_FILE}</b> 失败：${tokenLoadNote}。<br>请确认它和 index.html 在同一目录、内容是纯文本 token，然后重新部署。`;
   }

@@ -86,3 +86,6 @@ iOSInjectionProject/
 
 
 .figma/
+
+# 浅色主题预览截图（不参与部署）
+preview/
