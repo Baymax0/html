@@ -1,4 +1,4 @@
 # 开门 token（sessionId）。以后换 token 只改这一行，不用动 index.html。
 # 获取方式：App → 开门助手 → 右上角齿轮 → 「查看 Token」/「复制 Token」
 # 说明：以 # 开头的行会被忽略；token 前后不要留空格（留了也会自动去掉）。
-app:8a818285a120cf8c01a1b5b12cac5e14
+app:8a808046a120cd3801a1f7893cce7692
